@@ -145,14 +145,12 @@ def evaluate(y_true, y_pred):
     result = precision_recall_fscore_support(y_true, y_pred)
     scores = []
     for i, col in enumerate(y_true.columns.values):
-        scores.append((result[3][i], result[0][i], result[1][i], result[2][i]))
-    
+        scores.append((result[3][i], result[0][i], result[1][i], result[2][i]))    
     score_df = pd.DataFrame(index=y_true.columns.values, data=scores, 
                             columns=['Total Positive labels', 'Precision', 
                                      'Recall', 'Unweighted F-Score'])
     score_df.sort_values(by='Unweighted F-Score', axis=0, 
                          ascending=False, inplace=True)
-
     acc = accuracy_score(y_true, y_pred)
     loss = hamming_loss(y_true, y_pred)
     print("=====Global Metrics=====\n")
@@ -166,16 +164,21 @@ def main():
     
     database_path, model_path = sys.argv[1:]
     
+    print("Loading database..\n")
     X, y, labels = load_data(database_path, "DisasterTab")
     
     X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.25,
                                                         random_state=42)
-    
     # train & tune model
+    print("Training pipeline..\n")
     model = build_pipeline(X_train, y_train)
+    
+    print("Evaluating model performance..\n")
     # test & evaluate    
     predictions = model.predict(X_test)
     # print out label metrics
     score_df = evaluate(y_test, predictions)
     print(score_df)
+    print("Saving model..\n")
+    save_model(model_path, model)
 
