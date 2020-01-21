@@ -1,5 +1,21 @@
-import sys
+# -*- coding: utf-8 -*-
+"""
+train_model.py [module]
+@author: silent-j
+Train and evaluate a machine learning pipeline for multi-label classification
 
+Tune hyperparameters using GridSearch cross-validation and save selected
+estimator to a pickle object
+
+Args:
+database_path (str): 
+    path to a .db file, containing the text data
+model_path (str):
+    if train = True, model_path is used to serialize a trained model
+    else, model_path is used to load an already trained model
+
+"""
+import sys
 import pickle
 import pandas as pd
 from sqlalchemy import create_engine
@@ -56,19 +72,19 @@ def tokenize(text):
     
     return tokens
 
-def build_pipeline():
+def build_pipeline(X_train, y_train):
     """
-    Func: build a machine pipeline for text classification and tune hyperparameters using
-    GridSearchCV
+    Func: build a machine pipeline for text classification and tune 
+    hyperparameters using GridSearchCV
     Parameters:
     None
     Returns:
     Selected best_estimator_ from the trained GridSearch
     """
     pipeline = Pipeline([
-                        ('vect', TfidfVectorizer(tokenizer=tokenize)),
-                        ('lsa', TruncatedSVD(n_components=100, random_state=42)),
-                        ('clf', MultiOutputClassifier(MLPClassifier(random_state=42)))
+                ('vect', TfidfVectorizer(tokenizer=tokenize)),
+                ('lsa', TruncatedSVD(n_components=100, random_state=42)),
+                ('clf', MultiOutputClassifier(MLPClassifier(random_state=42)))
     ])
     # GridSearch
     parameters = {'vect__ngram_range': [(1,1), (1,2)],
@@ -84,6 +100,8 @@ def build_pipeline():
     cv = GridSearchCV(pipeline, param_grid=parameters, 
                       scoring=make_scorer(f1_score, average='weighted'),
                       n_jobs=4, cv=5, verbose=10)
+    
+    cv.fit(X_train, y_train)
     # select best estimator
     model = cv.best_estimator_
    
@@ -101,7 +119,6 @@ def save_model(path, model):
     with open(path, "wb") as out:
         pickle.dump(model, out)
     
-
 def load_model(path):
     """
     Func: load a saved instance of a model class using joblib
@@ -116,13 +133,14 @@ def load_model(path):
 
 def evaluate(y_true, y_pred):
     """
-    Func: evaluate the performance of a classifier model. Print out global & label
-    evaluation metrics.
+    Func: evaluate the performance of a classifier model. Print out global & 
+    label evaluation metrics.
     Parameters:
     y_true: array of ground-truth labels, (n_samples, n_labels)
     y_pred: array of predicted labels, (n_samples, n_labels)
     Returns:
-    Pandas dataframe of label evaluation metrics: precision, recall, Unweighted F-Score and support
+    Pandas dataframe of label evaluation metrics: precision, recall, 
+    Unweighted F-Score and support
     """
     result = precision_recall_fscore_support(y_true, y_pred)
     scores = []
@@ -130,8 +148,10 @@ def evaluate(y_true, y_pred):
         scores.append((result[3][i], result[0][i], result[1][i], result[2][i]))
     
     score_df = pd.DataFrame(index=y_true.columns.values, data=scores, 
-                            columns=['Total Positive labels', 'Precision', 'Recall', 'Unweighted F-Score'])
-    score_df.sort_values(by='Unweighted F-Score', axis=0, ascending=False, inplace=True)
+                            columns=['Total Positive labels', 'Precision', 
+                                     'Recall', 'Unweighted F-Score'])
+    score_df.sort_values(by='Unweighted F-Score', axis=0, 
+                         ascending=False, inplace=True)
 
     acc = accuracy_score(y_true, y_pred)
     loss = hamming_loss(y_true, y_pred)
@@ -141,3 +161,21 @@ def evaluate(y_true, y_pred):
     print("=====Label Metrics=====\n")
     
     return score_df
+
+def main():
+    
+    database_path, model_path = sys.argv[1:]
+    
+    X, y, labels = load_data(database_path, "DisasterTab")
+    
+    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.25,
+                                                        random_state=42)
+    
+    # train & tune model
+    model = build_pipeline(X_train, y_train)
+    # test & evaluate    
+    predictions = model.predict(X_test)
+    # print out label metrics
+    score_df = evaluate(y_test, predictions)
+    print(score_df)
+
