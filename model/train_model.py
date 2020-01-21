@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-train_model.py [module]
 @author: silent-j
+train_model.py [module]
 Train and evaluate a machine learning pipeline for multi-label classification
 
 Tune hyperparameters using GridSearch cross-validation and save selected
