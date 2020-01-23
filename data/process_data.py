@@ -4,7 +4,7 @@
 process_data.py [module]
 
 """
-
+import sys
 import pandas as pd
 from sqlalchemy import create_engine
 
@@ -69,3 +69,24 @@ def save_data(df, db_path, table_name):
     """
     engine = create_engine(f"sqlite:///{db_path}")
     df.to_sql(table_name, engine, index=False)
+
+def main():
+    if len(sys.argv == 5):
+        
+        message_path, label_path, db_path, table_name = sys.argv[1:]
+        
+        print(f"Loading data...{message_path} .. {label_path}\n")
+        
+        clean_data = process_raw_data(message_path, label_path)
+        
+        print("Saving cleaned data... {db_path} || {table_name}")
+        
+        save_data(clean_data, db_path, table_name)
+        print("Data Processed")
+        
+if __name__=="__main__":
+    main()
+
+
+
+
