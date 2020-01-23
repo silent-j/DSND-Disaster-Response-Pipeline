@@ -164,7 +164,7 @@ def main():
     if len(sys.argv) == 3:
         database_path, model_path = sys.argv[1:]
         
-        print("Loading database.. {}\n".format(database_path))
+        print("Loading database.. {}".format(database_path))
         X, y, labels = load_data(database_path, "DisasterTab")
         
         X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.25,
@@ -180,7 +180,7 @@ def main():
         score_df = evaluate_model(y_test, predictions, labels)
         print(score_df)
         
-        print("Saving model..{}\n".format(model_path))
+        print("\nSaving model..{}".format(model_path))
         save_model(model_path, model)
         
         print("Trained model saved")
