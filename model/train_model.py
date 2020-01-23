@@ -25,7 +25,7 @@ nltk.download(['punkt', 'stopwords', 'wordnet'])
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.decomposition import TruncatedSVD
@@ -119,19 +119,19 @@ def save_model(path, model):
     with open(path, "wb") as out:
         pickle.dump(model, out)
     
-def load_model(path):
-    """
-    Func: load a saved instance of a model class using joblib
-    Parameters:
-    path: str, path to saved pickle object
-    Returns:
-    saved instance of a model class
-    """
-    model = joblib.load(path)
-    
-    return model
+#def load_model(path):
+#    """
+#    Func: load a saved instance of a model class using joblib
+#    Parameters:
+#    path: str, path to saved pickle object
+#    Returns:
+#    saved instance of a model class
+#    """
+#    model = joblib.load(path)
+#    
+#    return model
 
-def evaluate(y_true, y_pred):
+def evaluate_model(y_true, y_pred, labels):
     """
     Func: evaluate the performance of a classifier model. Print out global & 
     label evaluation metrics.
@@ -144,9 +144,9 @@ def evaluate(y_true, y_pred):
     """
     result = precision_recall_fscore_support(y_true, y_pred)
     scores = []
-    for i, col in enumerate(y_true.columns.values):
+    for i, col in enumerate(labels):
         scores.append((result[3][i], result[0][i], result[1][i], result[2][i]))    
-    score_df = pd.DataFrame(index=y_true.columns.values, data=scores, 
+    score_df = pd.DataFrame(index=labels, data=scores, 
                             columns=['Total Positive labels', 'Precision', 
                                      'Recall', 'Unweighted F-Score'])
     score_df.sort_values(by='Unweighted F-Score', axis=0, 
@@ -161,24 +161,32 @@ def evaluate(y_true, y_pred):
     return score_df
 
 def main():
-    
-    database_path, model_path = sys.argv[1:]
-    
-    print("Loading database..\n")
-    X, y, labels = load_data(database_path, "DisasterTab")
-    
-    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.25,
-                                                        random_state=42)
-    # train & tune model
-    print("Training pipeline..\n")
-    model = build_pipeline(X_train, y_train)
-    
-    print("Evaluating model performance..\n")
-    # test & evaluate    
-    predictions = model.predict(X_test)
-    # print out label metrics
-    score_df = evaluate(y_test, predictions)
-    print(score_df)
-    print("Saving model..\n")
-    save_model(model_path, model)
+    if len(sys.argv) == 3:
+        database_path, model_path = sys.argv[1:]
+        
+        print("Loading database.. {}\n".format(database_path))
+        X, y, labels = load_data(database_path, "DisasterTab")
+        
+        X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.25,
+                                                            random_state=42)
+
+        print("Training pipeline..\n")
+        model = build_pipeline(X_train, y_train)
+        
+        print("Evaluating model performance..\n")
+ 
+        predictions = model.predict(X_test)
+
+        score_df = evaluate_model(y_test, predictions, labels)
+        print(score_df)
+        
+        print("Saving model..{}\n".format(model_path))
+        save_model(model_path, model)
+        
+        print("Trained model saved")
+    else:
+        print('Please provide the filepath of the disaster messages database '\
+              'as the first argument and the filepath of the pickle file to '\
+              'save the model to as the second argument. \n\nExample: python '\
+              'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
 
