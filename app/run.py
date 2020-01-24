@@ -4,6 +4,7 @@
 """
 
 import json
+import pickle
 import plotly
 import pandas as pd
 
@@ -31,12 +32,13 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/distab.db')
+engine = create_engine('sqlite:///C:/Users/James/Desktop/DSND/DSND-Disaster-Response-Pipeline/data/distab.db')
 df = pd.read_sql_table('DisasterTable', engine)
 
 # load model
-model = joblib.load("../model/mlp_class.pkl")
-
+model = joblib.load(r"C:/Users/James/Desktop/DSND/DSND-Disaster-Response-Pipeline/model/mlp_class.pkl")
+#with open(r"C:/Users/James/Desktop/DSND/DSND-Disaster-Response-Pipeline/model/mlp_class.pkl", 'rb') as fp:
+#    model = pickle.load(fp)
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')

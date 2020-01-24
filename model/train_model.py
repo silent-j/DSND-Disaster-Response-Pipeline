@@ -26,6 +26,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 #from sklearn.externals import joblib
+from sklearn.utils import resample
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.decomposition import TruncatedSVD
@@ -47,7 +48,7 @@ def load_data(db_path, table_name):
     y: dataframe of class data, (n_samples, n_classes)
     labels: list of class labels
     """    
-    engine = create_engine(db_path)
+    engine = create_engine(f"sqlite:///{db_path}")
     df = pd.read_sql(f"SELECT * FROM {table_name}", engine)
     X = df['message']
     y = df.iloc[:, 4:]
@@ -97,6 +98,7 @@ def build_pipeline(X_train, y_train):
                 'clf__estimator__warm_start': [True],
                 'clf__estimator__early_stopping': [True],
                 'clf__estimator__random_state': [42]}
+    
     cv = GridSearchCV(pipeline, param_grid=parameters, 
                       scoring=make_scorer(f1_score, average='weighted'),
                       n_jobs=4, cv=5, verbose=10)
@@ -165,9 +167,11 @@ def main():
         database_path, model_path = sys.argv[1:]
         
         print("Loading database.. {}".format(database_path))
-        X, y, labels = load_data(database_path, "DisasterTab")
+        X, y, labels = load_data(database_path, "DisasterTable")
         
-        X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.25,
+        X, y = resample(X, y)
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25,
                                                             random_state=42)
 
         print("Training pipeline..\n")
@@ -190,3 +194,5 @@ def main():
               'save the model to as the second argument. \n\nExample: python '\
               'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
 
+if __name__=="__main__":
+    main()
