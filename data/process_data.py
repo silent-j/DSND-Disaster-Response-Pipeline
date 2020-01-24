@@ -71,12 +71,12 @@ def save_data(df, db_path, table_name):
     df.to_sql(table_name, engine, index=False)
 
 def main():
-    if len(sys.argv == 5):       
-        message_path, label_path, db_path, table_name = sys.argv[1:]
-        
+    if len(sys.argv) == 4:       
+        message_path, label_path, db_path = sys.argv[1:]
+        table_name = "DisasterTable"
         print(f"Loading data...{message_path} .. {label_path}\n")       
         clean_data = process_raw_data(message_path, label_path)       
-        print("Saving cleaned data... {db_path} || {table_name}")       
+        print(f"Saving cleaned data... {db_path} || {table_name}")       
         save_data(clean_data, db_path, table_name)
         print("Data Processed")
         
