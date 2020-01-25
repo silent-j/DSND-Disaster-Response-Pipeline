@@ -101,7 +101,7 @@ def build_pipeline(X_train, y_train):
     
     cv = GridSearchCV(pipeline, param_grid=parameters, 
                       scoring=make_scorer(f1_score, average='weighted'),
-                      n_jobs=4, cv=5, verbose=10)
+                      n_jobs=1, cv=5, verbose=10)
     
     cv.fit(X_train, y_train)
     # select best estimator
