@@ -18,7 +18,8 @@ from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='..DSND/DSND-Disaster-Response-Pipeline/app/templates')
+
 
 def tokenize(text):
     tokens = word_tokenize(text)
@@ -32,13 +33,11 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///C:/Users/James/Desktop/DSND/DSND-Disaster-Response-Pipeline/data/distab.db')
+engine = create_engine('sqlite:///../DSND/DSND-Disaster-Response-Pipeline/data/distab.db')
 df = pd.read_sql_table('DisasterTable', engine)
 
 # load model
-model = joblib.load(r"C:/Users/James/Desktop/DSND/DSND-Disaster-Response-Pipeline/model/mlp_class.pkl")
-#with open(r"C:/Users/James/Desktop/DSND/DSND-Disaster-Response-Pipeline/model/mlp_class.pkl", 'rb') as fp:
-#    model = pickle.load(fp)
+model = joblib.load(r"../DSND/DSND-Disaster-Response-Pipeline/model/trained_mlp.pkl")
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
@@ -50,6 +49,9 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    categories = df.iloc[:,4:]
+    categories_mean = categories.mean().sort_values(ascending=False)[1:11]
+    categories_names = list(categories_mean.index)
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -68,6 +70,24 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=categories_names,
+                    y=categories_mean
+                )
+            ],
+
+            'layout': {
+                'title': 'Proportion of Top 10 Message Categories',
+                'yaxis': {
+                    'title': "Proportion"
+                },
+                'xaxis': {
+                    'title': ""
                 }
             }
         }
